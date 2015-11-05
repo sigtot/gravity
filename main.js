@@ -1,5 +1,5 @@
 var cWidth = 800;
-var cHeight = 600;
+var cHeight = 500;
 
 var calcRate = 128;
 var ppM = 1000;
@@ -8,7 +8,9 @@ var scale = 1;
 
 var sizeScale = 0.0001;
 
-var gConst = 6.67*Math.pow(10,-11);
+var gConst = 6.67408*Math.pow(10,-11);
+
+var mass = 2;
 
 var c = document.getElementById("canvas");
 ctx = c.getContext("2d");
@@ -22,12 +24,22 @@ var cursorDownTime;
 var massInterval;
 
 var animateCircle = false;
+var drag = false;
+var mouseIsCurrentlyDown = false;
+var toX;
+var toY;
+var newVelX;
+var newVelY;
+var dispToVel = 0.00001;
+
+var resetButton = document.getElementById("resetButton");
+var clearButton = document.getElementById("clearButton");
 
 var objects = [
 //	[posX,posY,velX,velY,accX,accY,mass]
 	{
 		posX: 400,
-		posY: 300,
+		posY: 250,
 
 		velX: 0,
 		velY: 0,
@@ -40,7 +52,7 @@ var objects = [
 	
 	{
 		posX: 400,
-		posY: 200,
+		posY: 150,
 
 		velX: -0.0005,
 		velY: 0,
@@ -56,20 +68,70 @@ function sign(x) {
 	return typeof x === 'number' ? x ? x < 0 ? -1 : 1 : x === x ? 0 : NaN : NaN;
 }
 
+function reset(){
+	objects = [
+		{
+			posX: 400,
+			posY: 250,
+
+			velX: 0,
+			velY: 0,
+
+			accX: 0,
+			accY: 0,
+
+			mass: 500000
+		},
+		
+		{
+			posX: 400,
+			posY: 150,
+
+			velX: -0.0005,
+			velY: 0,
+
+			accX: 0,
+			accY: 0,
+
+			mass: 10000
+		}
+	]
+}
+
+function clear(){
+	objects = [];
+}
+
 function addObject(x,y,m){
 	var obj = {};
 
+	// Position
 	obj.posX = x;
 	obj.posY = y;
 	
+	// Velocity
 	obj.velX = 0;
 	obj.velY = 0;
-	
+
+	// If a velocity has been dragged
+	if(newVelX != 0){
+		obj.velX = newVelX;
+		newVelX = 0;
+	}
+
+	if(newVelY != 0){
+		obj.velY = newVelY;
+		newVelY = 0;
+	}
+
+	// Acceleration
 	obj.accX = 0;
 	obj.accY = 0;
 
+	// Mass
 	obj.mass = m;
 
+	// And go!
 	objects.push(obj);
 }
 
@@ -153,7 +215,7 @@ function calc(){
 }
 
 function background(){
-	ctx.fillStyle = "#222222";
+	ctx.fillStyle = "#111111";
 	ctx.fillRect(0,0,cWidth,cHeight);
 }
 
@@ -164,6 +226,15 @@ function circleAnimation(){
 	ctx.beginPath();
 	ctx.arc(cursorX,cursorY,scale*Math.log(mass),0,2*Math.PI);
 	ctx.fill();
+}
+
+function drawLine(){
+	if(!drag) return;
+	ctx.beginPath();
+	ctx.strokeStyle = "#ff5555";
+	ctx.moveTo(cursorX,cursorY);
+	ctx.lineTo(toX,toY);
+	ctx.stroke();
 }
 
 // Calculation tick
@@ -177,16 +248,20 @@ function draw(){
 	background();
 	drawObjects();
 	circleAnimation();
+	drawLine();
 }
 
 window.onload = function(){
 	draw();
 }
 
+resetButton.onclick = reset;
+clearButton.onclick = clear;
+
 canvas.addEventListener("mousedown", mouseIsDown, false);
 canvas.addEventListener("mouseup", mouseIsUp, false);
+canvas.addEventListener("mousemove", checkDrag, false);
 
-var mass = 2;
 function mouseIsDown(event){
 	var x = event.x;
 	var y = event.y;
@@ -196,13 +271,13 @@ function mouseIsDown(event){
 
 	cursorX = x;
 	cursorY = y;
+	mouseIsCurrentlyDown = true;
 	var z = 0;
 
 	animateCircle = true;
 	massInterval = window.setInterval(function(){
 		z++;
-		mass = z * Math.pow(1.1,z) + 1;
-		console.log(mass);
+		mass = 100 * z * z;
 	},1000/calcRate)
 }
 
@@ -210,5 +285,27 @@ function mouseIsUp(event){
 	addObject(cursorX,cursorY,mass);
 	clearInterval(massInterval);
 	mass = 2;
+	drag = false;
+	mouseIsCurrentlyDown = false;
 	animateCircle = false;
+}
+
+function checkDrag(event){
+	if(!mouseIsCurrentlyDown) return;
+	if(mouseIsCurrentlyDown) drag = true;
+	var x = event.x;
+	var y = event.y;
+
+	x -= c.offsetLeft;
+	y -= c.offsetTop;
+
+	toX = x;
+	toY = y;
+
+	var dispX = toX - cursorX;
+	var dispY = toY - cursorY;
+	console.log("dispX: " + dispX + ", dispY: " + dispY);
+
+	newVelX = dispX * dispToVel;
+	newVelY = dispY * dispToVel;
 }
