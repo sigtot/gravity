@@ -28,8 +28,8 @@ var drag = false;
 var mouseIsCurrentlyDown = false;
 var toX;
 var toY;
-var newVelX;
-var newVelY;
+var newVelX = 0;
+var newVelY = 0;
 var dispToVel = 0.00001;
 
 var resetButton = document.getElementById("resetButton");
@@ -133,6 +133,11 @@ function addObject(x,y,m){
 
 	// And go!
 	objects.push(obj);
+
+	// Reset mass again just in case
+	mass = 2;
+	mouseIsCurrentlyDown = false;
+	clearInterval(massInterval);
 }
 
 function drawObjects(){
@@ -263,6 +268,9 @@ canvas.addEventListener("mouseup", mouseIsUp, false);
 canvas.addEventListener("mousemove", checkDrag, false);
 
 function mouseIsDown(event){
+	mass = 2;
+	clearInterval(massInterval);
+	console.log("mouse down, setting mass to 2");
 	var x = event.x;
 	var y = event.y;
 
@@ -276,6 +284,7 @@ function mouseIsDown(event){
 
 	animateCircle = true;
 	massInterval = window.setInterval(function(){
+		console.log("Increment mass");
 		z++;
 		mass = 100 * z * z;
 	},1000/calcRate)
