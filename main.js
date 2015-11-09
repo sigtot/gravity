@@ -47,20 +47,20 @@ var objects = [
 		accX: 0,
 		accY: 0,
 
-		mass: 500000
+		mass: 59720000 // Earth mass * 10^-19
 	},
 	
 	{
 		posX: 400,
-		posY: 150,
+		posY: 100,
 
-		velX: -0.0005,
+		velX: -0.0052,
 		velY: 0,
 
 		accX: 0,
 		accY: 0,
 
-		mass: 10000
+		mass: 7347.67 // Moon mass * 10⁻19
 	}
 ]
 
