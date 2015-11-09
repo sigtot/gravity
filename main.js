@@ -28,8 +28,8 @@ var drag = false;
 var mouseIsCurrentlyDown = false;
 var toX;
 var toY;
-var newVelX;
-var newVelY;
+var newVelX = 0;
+var newVelY = 0;
 var dispToVel = 0.00001;
 
 var resetButton = document.getElementById("resetButton");
@@ -47,20 +47,20 @@ var objects = [
 		accX: 0,
 		accY: 0,
 
-		mass: 59720000 // Earth mass * 10^-19
+		mass: 5972000 // Earth mass * 10^-20
 	},
 	
 	{
 		posX: 400,
 		posY: 100,
 
-		velX: -0.0052,
+		velX: -0.0015,
 		velY: 0,
 
 		accX: 0,
 		accY: 0,
 
-		mass: 7347.67 // Moon mass * 10⁻19
+		mass: 734.767 // Moon mass * 10⁻20
 	}
 ]
 
@@ -80,20 +80,20 @@ function reset(){
 			accX: 0,
 			accY: 0,
 
-			mass: 500000
+			mass: 5972000 // Earth mass * 10^-20
 		},
 		
 		{
 			posX: 400,
-			posY: 150,
+			posY: 100,
 
-			velX: -0.0005,
+			velX: -0.0015,
 			velY: 0,
 
 			accX: 0,
 			accY: 0,
 
-			mass: 10000
+			mass: 734.767 // Moon mass * 10⁻20
 		}
 	]
 }
@@ -133,13 +133,22 @@ function addObject(x,y,m){
 
 	// And go!
 	objects.push(obj);
+
+	// Reset mass again just in case
+	mass = 2;
+	mouseIsCurrentlyDown = false;
+	clearInterval(massInterval);
 }
 
 function drawObjects(){
 	for (var i = 0; i < objects.length; i++) {
+
+		var rad = scale * 2 * Math.log(objects[i].mass) - 7;
+		while(rad <= 0) rad++;
+
 		ctx.fillStyle = "#eeeeee";
 		ctx.beginPath();
-		ctx.arc(objects[i].posX,objects[i].posY,scale*Math.log(objects[i].mass),0,2*Math.PI);
+		ctx.arc(objects[i].posX,objects[i].posY,rad,0,2*Math.PI);
 		ctx.fill();
 	};
 }
@@ -222,10 +231,24 @@ function background(){
 function circleAnimation(){
 	if(!animateCircle) return;
 
+	var rad = scale * 2 * Math.log(mass) - 7
+	while(rad <= 0) rad++;
+
 	ctx.fillStyle = "#ee8888";
 	ctx.beginPath();
-	ctx.arc(cursorX,cursorY,scale*Math.log(mass),0,2*Math.PI);
+	ctx.arc(cursorX,cursorY,rad,0,2*Math.PI);
 	ctx.fill();
+}
+
+function massTextAnimation(){
+	if(!animateCircle) return;
+	var yOffset = + scale * 2 * Math.log(mass);
+	var xOffset = mass.toString().length * 4.5;
+
+	var x = mass.toString().length;
+	ctx.fillStyle = "#eeeeee";
+	ctx.font = "15px Courier";
+	ctx.fillText(mass,cursorX - xOffset,cursorY - yOffset);
 }
 
 function drawLine(){
@@ -249,6 +272,7 @@ function draw(){
 	drawObjects();
 	circleAnimation();
 	drawLine();
+	massTextAnimation();
 }
 
 window.onload = function(){
@@ -263,6 +287,9 @@ canvas.addEventListener("mouseup", mouseIsUp, false);
 canvas.addEventListener("mousemove", checkDrag, false);
 
 function mouseIsDown(event){
+	mass = 2;
+	clearInterval(massInterval);
+	//console.log("mouse down, setting mass to 2");
 	var x = event.x;
 	var y = event.y;
 
@@ -276,6 +303,7 @@ function mouseIsDown(event){
 
 	animateCircle = true;
 	massInterval = window.setInterval(function(){
+		//console.log("Increment mass");
 		z++;
 		mass = 100 * z * z;
 	},1000/calcRate)
@@ -304,7 +332,7 @@ function checkDrag(event){
 
 	var dispX = toX - cursorX;
 	var dispY = toY - cursorY;
-	console.log("dispX: " + dispX + ", dispY: " + dispY);
+	//console.log("dispX: " + dispX + ", dispY: " + dispY);
 
 	newVelX = dispX * dispToVel;
 	newVelY = dispY * dispToVel;
